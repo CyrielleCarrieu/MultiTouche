@@ -222,7 +222,10 @@ public class T02_TouchSelect extends Activity {
 		class SelectMachine extends StateMachine {
 			Item graphicItem = null;
 			long cursor = -1;
-			List<Integer> listCursors = new ArrayList<Integer>();
+			List<Integer> listCursors = new ArrayList<>();
+
+			Point p0;
+			Point p1;
 			SelectMachine(Item graphicItem) {
 				this.graphicItem = graphicItem;
 			}
@@ -237,6 +240,7 @@ public class T02_TouchSelect extends Activity {
 						cursor = evt.cursorID;
 						graphicItem.style.r = 255;
 						listCursors.add(evt.cursorID);
+						p0 = evt.p;
 					}
 
 					public State goTo() {
@@ -246,19 +250,82 @@ public class T02_TouchSelect extends Activity {
 			};
 
 			public State touched = new State() {
-				Transition release = new Transition<Release>() {
+
+				Transition press = new Transition<Press>() {
 					public boolean guard() {
-						return evt.graphicItem == graphicItem && listCursors.contains(evt.cursorID);
+						return evt.graphicItem == graphicItem ;
+					}
+
+					public void action() {
+						graphicItem.style.r = 255;
+						listCursors.add(evt.cursorID);
+						p1 = evt.p;
+					}
+
+					public State goTo() {
+						return touched;
+					}
+				};
+
+				Transition move = new Transition<Move>() {
+					public boolean guard() {
+						return evt.cursorID == listCursors.get(0);
+					}
+					public void action() {
+						graphicItem.translateBy(new fr.liienac.statemachine.geometry.Vector(p0 ,evt.p));
+						p0 = evt.p;
+					}
+
+					public State goTo() {
+						return touched;
+					}
+				};
+
+				Transition resize = new Transition<Move>() {
+					public boolean guard() {
+						return listCursors.contains(evt.cursorID) && listCursors.size() == 2 ;
+					}
+					public void action() {
+						float ds= Point.minus(p0,evt.p).norm()/Point.minus(p0,p1).norm();
+						float height = graphicItem.height;
+						float width = graphicItem.width;
+						Point center = new Point(graphicItem.x + width/2, graphicItem.y +height/2);
+						graphicItem.scaleBy(ds, center);
+						p0 = evt.p;
+					}
+
+					public State goTo() {
+						return touched;
+					}
+				};
+
+				Transition release1 = new Transition<Release>() {
+					public boolean guard() {
+						return listCursors.contains(evt.cursorID) && listCursors.size() > 1 ;
+					}
+					public void action() {
+						listCursors.remove((Object)evt.cursorID);
+					}
+
+					public State goTo() {
+						return touched;
+					}
+				};
+
+				Transition release2 = new Transition<Release>() {
+					public boolean guard() {
+						return listCursors.contains(evt.cursorID) && listCursors.size() == 1 ;
 					}
 					public void action() {
 						graphicItem.style.r = 0;
-						listCursors.remove(evt.cursorID);
+						listCursors.remove((Object)evt.cursorID);
 					}
 
 					public State goTo() {
 						return start;
 					}
 				};
+
 			};
 		}
 
