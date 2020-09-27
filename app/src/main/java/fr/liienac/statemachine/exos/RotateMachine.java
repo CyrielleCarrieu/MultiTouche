@@ -1,7 +1,5 @@
 package fr.liienac.statemachine.exos;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.TreeMap;
 
 import fr.liienac.statemachine.StateMachine;
@@ -12,11 +10,11 @@ import fr.liienac.statemachine.geometry.Point;
 import fr.liienac.statemachine.graphic.Item;
 
 
-public class ResizeMachine extends StateMachine {
+public class RotateMachine extends StateMachine {
     Item graphicItem = null;
     TreeMap<Integer, Point> listCursors = new TreeMap<>();
 
-    public ResizeMachine(Item graphicItem) {
+    public RotateMachine(Item graphicItem) {
         this.graphicItem = graphicItem;
     }
 
@@ -128,11 +126,11 @@ public class ResizeMachine extends StateMachine {
 
         Transition move = new Transition<Move>() {
             public boolean guard() {
-                return evt.cursorID == listCursors.firstKey() && listCursors.size()== 1;
+                return evt.cursorID == listCursors.firstKey() && listCursors.size() == 1;
             }
             public void action() {
                 Point p = listCursors.firstEntry().getValue();
-                graphicItem.translateBy(new fr.liienac.statemachine.geometry.Vector(p ,evt.p));
+                graphicItem.translateBy(new fr.liienac.statemachine.geometry.Vector(p, evt.p));
                 listCursors.put(listCursors.firstKey(), evt.p);
             }
 
@@ -182,8 +180,7 @@ public class ResizeMachine extends StateMachine {
             public void action() {
                 Point p0 = listCursors.firstEntry().getValue();
                 Point p1 = listCursors.lastEntry().getValue();
-                float ds = Point.minus(p0, evt.p).norm()/Point.minus(p0, p1).norm();
-                graphicItem.scaleBy(ds, p0);
+                graphicItem.rotateBy(new fr.liienac.statemachine.geometry.Vector(p0, evt.p), new fr.liienac.statemachine.geometry.Vector(p0, p1), p0);
                 listCursors.put(listCursors.lastKey(), evt.p);
             }
 
@@ -200,8 +197,7 @@ public class ResizeMachine extends StateMachine {
             public void action() {
                 Point p0 = listCursors.firstEntry().getValue();
                 Point p1 = listCursors.lastEntry().getValue();
-                float ds = Point.minus(p1,evt.p).norm()/Point.minus(p1,p0).norm();
-                graphicItem.scaleBy(ds, p1);
+                graphicItem.rotateBy(new fr.liienac.statemachine.geometry.Vector(p1, evt.p), new fr.liienac.statemachine.geometry.Vector(p1, p0), p1);
                 listCursors.put(listCursors.firstKey(), evt.p);
             }
 

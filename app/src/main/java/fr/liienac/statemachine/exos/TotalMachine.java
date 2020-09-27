@@ -1,8 +1,5 @@
 package fr.liienac.statemachine.exos;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.TreeMap;
 
 import fr.liienac.statemachine.StateMachine;
@@ -13,18 +10,18 @@ import fr.liienac.statemachine.geometry.Point;
 import fr.liienac.statemachine.graphic.Item;
 
 
-public class DNDMachine extends StateMachine {
+public class TotalMachine extends StateMachine {
     Item graphicItem = null;
     TreeMap<Integer, Point> listCursors = new TreeMap<>();
 
-    public DNDMachine(Item graphicItem) {
+    public TotalMachine(Item graphicItem) {
         this.graphicItem = graphicItem;
     }
 
     public State start = new State() {
         Transition press = new Transition<Press>() {
             public boolean guard() {
-                return evt.graphicItem == graphicItem && listCursors.size() == 0;
+                return evt.graphicItem == graphicItem && listCursors.size()== 0;
             }
 
             public void action() {
@@ -55,7 +52,7 @@ public class DNDMachine extends StateMachine {
 
         Transition move = new Transition<Move>() {
             public boolean guard() {
-                return evt.graphicItem == graphicItem &&
+                return evt.graphicItem ==graphicItem && listCursors.size() == 1 &&
                         Point.distance(listCursors.firstEntry().getValue(), evt.p) > 50 ;
             }
 
@@ -64,7 +61,22 @@ public class DNDMachine extends StateMachine {
             }
 
             public State goTo() {
-                return touched;
+                return firstTouched;
+            }
+        };
+
+        Transition move2 = new Transition<Move>() {
+            public boolean guard() {
+                return evt.graphicItem == graphicItem && listCursors.size() > 1 &&
+                        Point.distance(listCursors.firstEntry().getValue(), evt.p) > 50 ;
+            }
+
+            public void action() {
+
+            }
+
+            public State goTo() {
+                return secondTouched;
             }
         };
 
@@ -77,7 +89,7 @@ public class DNDMachine extends StateMachine {
             }
 
             public State goTo() {
-                return hysterese;
+                return firstTouched;
             }
         };
 
@@ -96,26 +108,25 @@ public class DNDMachine extends StateMachine {
         };
     };
 
-    public State touched = new State() {
+    public State firstTouched = new State() {
 
         Transition press = new Transition<Press>() {
             public boolean guard() {
-                return evt.graphicItem == graphicItem;
+                return evt.graphicItem == graphicItem && listCursors.size() == 1;
             }
 
             public void action() {
-                graphicItem.style.r = 255;
                 listCursors.put(evt.cursorID, evt.p);
             }
 
             public State goTo() {
-                return touched;
+                return secondTouched;
             }
         };
 
         Transition move = new Transition<Move>() {
             public boolean guard() {
-                return evt.cursorID == listCursors.firstKey();
+                return evt.cursorID == listCursors.firstKey() && listCursors.size()== 1;
             }
             public void action() {
                 Point p = listCursors.firstEntry().getValue();
@@ -124,20 +135,7 @@ public class DNDMachine extends StateMachine {
             }
 
             public State goTo() {
-                return touched;
-            }
-        };
-
-        Transition releaseCursor = new Transition<Release>() {
-            public boolean guard() {
-                return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() > 1 ;
-            }
-            public void action() {
-                listCursors.remove((Object)evt.cursorID);
-            }
-
-            public State goTo() {
-                return touched;
+                return firstTouched;
             }
         };
 
@@ -157,4 +155,71 @@ public class DNDMachine extends StateMachine {
 
     };
 
+    public State secondTouched = new State() {
+
+        Transition press = new Transition<Press>() {
+            public boolean guard() {
+                return evt.graphicItem == graphicItem ;
+            }
+
+            public void action() {
+                graphicItem.style.r = 255;
+                listCursors.put(evt.cursorID, evt.p);
+            }
+
+            public State goTo() {
+                return secondTouched;
+            }
+        };
+
+        Transition resizeP0 = new Transition<Move>() {
+            public boolean guard() {
+                return listCursors.containsKey((Object)evt.cursorID) &&
+                        listCursors.lastKey() == evt.cursorID && listCursors.size() >= 2 ;
+            }
+            public void action() {
+                Point p0 = listCursors.firstEntry().getValue();
+                Point p1 = listCursors.lastEntry().getValue();
+                float ds = Point.minus(p0, evt.p).norm()/Point.minus(p0, p1).norm();
+                graphicItem.scaleBy(ds, p0);
+                listCursors.put(listCursors.lastKey(), evt.p);
+            }
+
+            public State goTo() {
+                return secondTouched;
+            }
+        };
+
+        Transition resizeP1 = new Transition<Move>() {
+            public boolean guard() {
+                return listCursors.containsKey((Object)evt.cursorID) &&
+                        listCursors.firstKey() == evt.cursorID && listCursors.size() >= 2 ;
+            }
+            public void action() {
+                Point p0 = listCursors.firstEntry().getValue();
+                Point p1 = listCursors.lastEntry().getValue();
+                float ds = Point.minus(p1,evt.p).norm()/Point.minus(p1,p0).norm();
+                graphicItem.scaleBy(ds, p1);
+                listCursors.put(listCursors.firstKey(), evt.p);
+            }
+
+            public State goTo() {
+                return secondTouched;
+            }
+        };
+
+        Transition release = new Transition<Release>() {
+            public boolean guard() {
+                return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() == 2 ;
+            }
+            public void action() {
+                listCursors.remove((Object)evt.cursorID);
+            }
+
+            public State goTo() {
+                return firstTouched;
+            }
+        };
+
+    };
 }

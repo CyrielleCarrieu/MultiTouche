@@ -17,7 +17,9 @@ import fr.liienac.statemachine.ColorPicking;
 import fr.liienac.statemachine.event.Press;
 import fr.liienac.statemachine.event.Release;
 import fr.liienac.statemachine.event.Timeout;
+import fr.liienac.statemachine.exos.DNDMachine;
 import fr.liienac.statemachine.exos.ResizeMachine;
+import fr.liienac.statemachine.exos.RotateMachine;
 import fr.liienac.statemachine.exos.SelectMachine;
 import fr.liienac.statemachine.graphic.Item;
 import fr.liienac.statemachine.geometry.Point;
@@ -155,15 +157,15 @@ public class T02_TouchSelect extends Activity {
 
 			graphicItem = new Item(20, 20, 300, 300);
 			sceneGraph.add(graphicItem);
-			machine = new SelectMachine(graphicItem);
+			machine = new RotateMachine(graphicItem);
 			machines.add(machine);
 			graphicItem2 = new Item(500, 500, 300, 300);
 			sceneGraph.add(graphicItem2);
-			machine2 = new SelectMachine(graphicItem2);
+			machine2 = new RotateMachine(graphicItem2);
 			machines.add(machine2);
 			graphicItem3 = new Item(200, 200, 300, 300);
 			sceneGraph.add(graphicItem3);
-			machine3 = new SelectMachine(graphicItem3);
+			machine3 = new RotateMachine(graphicItem3);
 			machines.add(machine3);
 
 //			machine = new ClickMachine(this);

@@ -38,11 +38,10 @@ public class SelectMachine extends StateMachine {
 
         Transition press = new Transition<Press>() {
             public boolean guard() {
-                return evt.graphicItem == graphicItem && listCursors.size() == 1;
+                return evt.graphicItem == graphicItem ;
             }
 
             public void action() {
-                graphicItem.style.r = 255;
                 listCursors.add(evt.cursorID);
             }
 
@@ -54,7 +53,7 @@ public class SelectMachine extends StateMachine {
 
         Transition releaseStay = new Transition<Release>() {
             public boolean guard() {
-                return listCursors.contains(evt.cursorID) && listCursors.size() >= 2;
+                return listCursors.contains(evt.cursorID) && listCursors.size() > 1;
             }
 
             public void action() {
