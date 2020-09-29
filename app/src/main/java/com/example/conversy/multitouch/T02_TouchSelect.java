@@ -100,7 +100,8 @@ public class T02_TouchSelect extends Activity {
 //		client.disconnect();
 //	}
 
-	public class MyView extends View {
+	public class MyView extends View{
+
 
 		class Cursor {
 			public Point p;
@@ -170,6 +171,7 @@ public class T02_TouchSelect extends Activity {
 
 			StateMachine machine = new PanMachine();
 			machines.add(machine);
+
 		}
 
 		@Override
@@ -730,7 +732,7 @@ public class T02_TouchSelect extends Activity {
 
 		@Override
 		public boolean onTouchEvent(MotionEvent event) {
-			//System.out.println("------");
+			System.out.println("------");
 			int action = event.getActionMasked(); //MotionEventCompat.getActionMasked(event);
 			int index = event.getActionIndex(); //MotionEventCompat.getActionIndex(event);
 			int id = event.getPointerId(index); //MotionEventCompat.getPointerId(event, index);
@@ -793,6 +795,7 @@ public class T02_TouchSelect extends Activity {
 
 			return true;
 		}
+
 /*
 		@Override
 		public boolean onHoverEvent(MotionEvent event) {
