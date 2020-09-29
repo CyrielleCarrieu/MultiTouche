@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2018 Stéphane Conversy - ENAC - All rights Reserved
- * Modified by Nicolas Saporito - ENAC (06/04/2017): 
+ * Modified by Nicolas Saporito - ENAC (06/04/2017):
  *     added generics reflection
  *     added getCurrentState()
  *     added initialize() to fix leaking this in constructor
@@ -8,6 +8,7 @@
  */
 package fr.liienac.statemachine;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
@@ -18,8 +19,10 @@ public class StateMachine {
 
     protected State current = null;
     protected State first = null;
+    protected boolean debug = false;
 
     public State getCurrentState() { return current; }
+    public void setDebug(boolean d) { debug = d; }
 
     public <Event> void handleEvent(Event evt) {
         current.handleEvent(evt);
@@ -29,6 +32,20 @@ public class StateMachine {
         if (current != s) {
             current.leave();
             current = s;
+            if (debug) {
+                for (Field f : this.getClass().getFields()) { //getDeclaredFields() returns null
+                    try {
+                        if (s == f.get(this)) {
+                            System.out.println("now in state: " + f.getName());
+                            break;
+                        }
+                    } catch (IllegalArgumentException e) {
+                        //
+                    } catch (IllegalAccessException e) {
+
+                    }
+                }
+            }
             current.enter();
         }
     }
@@ -51,8 +68,8 @@ public class StateMachine {
         protected void enter() {}
         protected void leave() {}
 
-        // Hack for generics reflection: Type arguments to generic classes 
-        // are not available for reflection at runtime, unless... 
+        // Hack for generics reflection: Type arguments to generic classes
+        // are not available for reflection at runtime, unless...
         // they come from a generic superclass, so here it is
         private class MotherOfAllTransitions<EventT> {}
 
@@ -88,6 +105,18 @@ public class StateMachine {
             for (Transition t : ts) {
                 t.evt = evt;
                 if (t.guard()) {
+                    if  (debug) {
+                        for(Field f: getClass().getFields()) {
+                            try {
+                                if (t == f.get(this)) {
+                                    System.out.println("   transition: " + f.getName());
+                                    break;
+                                }
+                            } catch (IllegalArgumentException e) {
+                            } catch (IllegalAccessException e) {
+                            }
+                        }
+                    }
                     t.action();
                     StateMachine.this.goTo(t.goTo());
                     break;

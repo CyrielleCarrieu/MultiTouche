@@ -22,7 +22,7 @@ public class DNDMachine extends StateMachine {
     }
 
     public State start = new State() {
-        Transition press = new Transition<Press>() {
+        public Transition press = new Transition<Press>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem && listCursors.size() == 0;
             }
@@ -39,7 +39,7 @@ public class DNDMachine extends StateMachine {
     };
 
     public State hysterese = new State() {
-        Transition press = new Transition<Press>() {
+        public Transition press = new Transition<Press>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem;
             }
@@ -53,7 +53,7 @@ public class DNDMachine extends StateMachine {
             }
         };
 
-        Transition move = new Transition<Move>() {
+        public Transition move = new Transition<Move>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem &&
                         Point.distance(listCursors.firstEntry().getValue(), evt.p) > 50 ;
@@ -68,7 +68,7 @@ public class DNDMachine extends StateMachine {
             }
         };
 
-        Transition releaseCursor = new Transition<Release>() {
+        public Transition releaseCursor = new Transition<Release>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() > 1 ;
             }
@@ -81,7 +81,7 @@ public class DNDMachine extends StateMachine {
             }
         };
 
-        Transition releaseLastCursor = new Transition<Release>() {
+        public Transition releaseLastCursor = new Transition<Release>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() == 1 ;
             }
@@ -98,7 +98,7 @@ public class DNDMachine extends StateMachine {
 
     public State touched = new State() {
 
-        Transition press = new Transition<Press>() {
+        public Transition press = new Transition<Press>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem;
             }
@@ -113,7 +113,7 @@ public class DNDMachine extends StateMachine {
             }
         };
 
-        Transition move = new Transition<Move>() {
+        public Transition move = new Transition<Move>() {
             public boolean guard() {
                 return evt.cursorID == listCursors.firstKey();
             }
@@ -128,7 +128,7 @@ public class DNDMachine extends StateMachine {
             }
         };
 
-        Transition releaseCursor = new Transition<Release>() {
+        public Transition releaseCursor = new Transition<Release>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() > 1 ;
             }
@@ -141,7 +141,7 @@ public class DNDMachine extends StateMachine {
             }
         };
 
-        Transition releaseLastCursor = new Transition<Release>() {
+        public Transition releaseLastCursor = new Transition<Release>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() == 1 ;
             }

@@ -18,7 +18,7 @@ public class SelectMachine extends StateMachine {
     }
 
     public State start = new State() {
-        Transition press = new Transition<Press>() {
+        public Transition press = new Transition<Press>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem && listCursors.size() == 0;
             }
@@ -36,7 +36,7 @@ public class SelectMachine extends StateMachine {
 
     public State touched = new State() {
 
-        Transition press = new Transition<Press>() {
+        public Transition press = new Transition<Press>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem ;
             }
@@ -51,7 +51,7 @@ public class SelectMachine extends StateMachine {
         };
 
 
-        Transition releaseStay = new Transition<Release>() {
+        public Transition releaseStay = new Transition<Release>() {
             public boolean guard() {
                 return listCursors.contains(evt.cursorID) && listCursors.size() > 1;
             }
@@ -65,7 +65,7 @@ public class SelectMachine extends StateMachine {
             }
         };
 
-        Transition releaseStart = new Transition<Release>() {
+        public Transition releaseStart = new Transition<Release>() {
             public boolean guard() {
                 return listCursors.contains(evt.cursorID) && listCursors.size() == 1;
             }

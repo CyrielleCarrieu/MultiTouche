@@ -19,7 +19,7 @@ public class TotalMachine extends StateMachine {
     }
 
     public State start = new State() {
-        Transition press = new Transition<Press>() {
+        public Transition press = new Transition<Press>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem && listCursors.size()== 0;
             }
@@ -36,7 +36,7 @@ public class TotalMachine extends StateMachine {
     };
 
     public State hysterese = new State() {
-        Transition press = new Transition<Press>() {
+        public Transition press = new Transition<Press>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem;
             }
@@ -50,7 +50,7 @@ public class TotalMachine extends StateMachine {
             }
         };
 
-        Transition move = new Transition<Move>() {
+        public Transition move = new Transition<Move>() {
             public boolean guard() {
                 return evt.graphicItem ==graphicItem && listCursors.size() == 1 &&
                         Point.distance(listCursors.firstEntry().getValue(), evt.p) > 50 ;
@@ -65,7 +65,7 @@ public class TotalMachine extends StateMachine {
             }
         };
 
-        Transition move2 = new Transition<Move>() {
+        public Transition move2 = new Transition<Move>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem && listCursors.size() > 1 &&
                         Point.distance(listCursors.firstEntry().getValue(), evt.p) > 50 ;
@@ -80,7 +80,7 @@ public class TotalMachine extends StateMachine {
             }
         };
 
-        Transition releaseCursor = new Transition<Release>() {
+        public Transition releaseCursor = new Transition<Release>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() > 1 ;
             }
@@ -93,7 +93,7 @@ public class TotalMachine extends StateMachine {
             }
         };
 
-        Transition releaseLastCursor = new Transition<Release>() {
+        public Transition releaseLastCursor = new Transition<Release>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() == 1 ;
             }
@@ -110,7 +110,7 @@ public class TotalMachine extends StateMachine {
 
     public State firstTouched = new State() {
 
-        Transition press = new Transition<Press>() {
+        public Transition press = new Transition<Press>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem && listCursors.size() == 1;
             }
@@ -124,13 +124,13 @@ public class TotalMachine extends StateMachine {
             }
         };
 
-        Transition move = new Transition<Move>() {
+        public Transition move = new Transition<Move>() {
             public boolean guard() {
-                return evt.cursorID == listCursors.firstKey() && listCursors.size()== 1;
+                return evt.cursorID == listCursors.firstKey() && listCursors.size() == 1;
             }
             public void action() {
                 Point p = listCursors.firstEntry().getValue();
-                graphicItem.translateBy(new fr.liienac.statemachine.geometry.Vector(p ,evt.p));
+                graphicItem.translateBy(new fr.liienac.statemachine.geometry.Vector(p, evt.p));
                 listCursors.put(listCursors.firstKey(), evt.p);
             }
 
@@ -139,7 +139,7 @@ public class TotalMachine extends StateMachine {
             }
         };
 
-        Transition releaseLastCursor = new Transition<Release>() {
+        public Transition releaseLastCursor = new Transition<Release>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() == 1 ;
             }
@@ -157,7 +157,7 @@ public class TotalMachine extends StateMachine {
 
     public State secondTouched = new State() {
 
-        Transition press = new Transition<Press>() {
+        public Transition press = new Transition<Press>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem ;
             }
@@ -172,7 +172,7 @@ public class TotalMachine extends StateMachine {
             }
         };
 
-        Transition resizeP0 = new Transition<Move>() {
+        public Transition moveP0 = new Transition<Move>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) &&
                         listCursors.lastKey() == evt.cursorID && listCursors.size() >= 2 ;
@@ -182,6 +182,7 @@ public class TotalMachine extends StateMachine {
                 Point p1 = listCursors.lastEntry().getValue();
                 float ds = Point.minus(p0, evt.p).norm()/Point.minus(p0, p1).norm();
                 graphicItem.scaleBy(ds, p0);
+                graphicItem.rotateBy(new fr.liienac.statemachine.geometry.Vector(p0, evt.p), new fr.liienac.statemachine.geometry.Vector(p0, p1), p0);
                 listCursors.put(listCursors.lastKey(), evt.p);
             }
 
@@ -190,7 +191,7 @@ public class TotalMachine extends StateMachine {
             }
         };
 
-        Transition resizeP1 = new Transition<Move>() {
+        public Transition moveP1 = new Transition<Move>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) &&
                         listCursors.firstKey() == evt.cursorID && listCursors.size() >= 2 ;
@@ -200,6 +201,7 @@ public class TotalMachine extends StateMachine {
                 Point p1 = listCursors.lastEntry().getValue();
                 float ds = Point.minus(p1,evt.p).norm()/Point.minus(p1,p0).norm();
                 graphicItem.scaleBy(ds, p1);
+                graphicItem.rotateBy(new fr.liienac.statemachine.geometry.Vector(p1, evt.p), new fr.liienac.statemachine.geometry.Vector(p1, p0), p1);
                 listCursors.put(listCursors.firstKey(), evt.p);
             }
 
@@ -208,7 +210,20 @@ public class TotalMachine extends StateMachine {
             }
         };
 
-        Transition release = new Transition<Release>() {
+        public Transition release = new Transition<Release>() {
+            public boolean guard() {
+                return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() > 2 ;
+            }
+            public void action() {
+                listCursors.remove((Object)evt.cursorID);
+            }
+
+            public State goTo() {
+                return secondTouched;
+            }
+        };
+
+        public Transition release2 = new Transition<Release>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() == 2 ;
             }

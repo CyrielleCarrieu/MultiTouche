@@ -7,8 +7,8 @@ package com.example.conversy.multitouch;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.Vector;
 
 import fr.liienac.statemachine.event.Move;
@@ -17,10 +17,6 @@ import fr.liienac.statemachine.ColorPicking;
 import fr.liienac.statemachine.event.Press;
 import fr.liienac.statemachine.event.Release;
 import fr.liienac.statemachine.event.Timeout;
-import fr.liienac.statemachine.exos.DNDMachine;
-import fr.liienac.statemachine.exos.ResizeMachine;
-import fr.liienac.statemachine.exos.RotateMachine;
-import fr.liienac.statemachine.exos.SelectMachine;
 import fr.liienac.statemachine.graphic.Item;
 import fr.liienac.statemachine.geometry.Point;
 import fr.liienac.statemachine.StateMachine;
@@ -115,6 +111,7 @@ public class T02_TouchSelect extends Activity {
 		Map<Long, Cursor> cursors = new HashMap<Long, Cursor>();
 		Collection<Item> sceneGraph = new Vector<Item>();
 		ColorPicking colorPicking = new ColorPicking();
+		ArrayList<Item> graphicItemTouched = new ArrayList<>();
 
 		Handler timeoutHandler = new Handler(Looper.getMainLooper()) {
 			public void handleMessage(Message inputMessage) {
@@ -148,7 +145,7 @@ public class T02_TouchSelect extends Activity {
 			pickingPaint = new Paint();
 			pickingPaint.setAntiAlias(false);
 
-			StateMachine machine;
+			StateMachine machine1;
 			Item graphicItem;
 			StateMachine machine2;
 			Item graphicItem2;
@@ -157,19 +154,22 @@ public class T02_TouchSelect extends Activity {
 
 			graphicItem = new Item(20, 20, 300, 300);
 			sceneGraph.add(graphicItem);
-			machine = new RotateMachine(graphicItem);
-			machines.add(machine);
+			machine1 = new RRRMachine(graphicItem);
+			machine1.setDebug(true);
+			machines.add(machine1);
 			graphicItem2 = new Item(500, 500, 300, 300);
 			sceneGraph.add(graphicItem2);
-			machine2 = new RotateMachine(graphicItem2);
+			machine2 = new RRRMachine(graphicItem2);
+			machine2.setDebug(true);
 			machines.add(machine2);
 			graphicItem3 = new Item(200, 200, 300, 300);
 			sceneGraph.add(graphicItem3);
-			machine3 = new RotateMachine(graphicItem3);
+			machine3 = new RRRMachine(graphicItem3);
+			machine3.setDebug(true);
 			machines.add(machine3);
 
-//			machine = new ClickMachine(this);
-//			machines.add(machine);
+			StateMachine machine = new PanMachine();
+			machines.add(machine);
 		}
 
 		@Override
@@ -219,26 +219,24 @@ public class T02_TouchSelect extends Activity {
 			}
 		}
 
-		class NewMachine extends StateMachine {
+		public class RRRMachine extends StateMachine {
 			Item graphicItem = null;
-			List<Integer> listCursors = new ArrayList<>();
+			TreeMap<Integer, Point> listCursors = new TreeMap<>();
 
-			Point p0;
-			Point p1;
-			NewMachine(Item graphicItem) {
+			public RRRMachine(Item graphicItem) {
 				this.graphicItem = graphicItem;
 			}
 
 			public State start = new State() {
-				Transition press = new Transition<Press>() {
+				public Transition press = new Transition<Press>() {
 					public boolean guard() {
 						return evt.graphicItem == graphicItem && listCursors.size()== 0;
 					}
 
 					public void action() {
 						graphicItem.style.r = 255;
-						listCursors.add(evt.cursorID);
-						p0 = evt.p;
+						listCursors.put(evt.cursorID, evt.p);
+						graphicItemTouched.add(graphicItem);
 					}
 
 					public State goTo() {
@@ -248,12 +246,28 @@ public class T02_TouchSelect extends Activity {
 			};
 
 			public State hysterese = new State() {
-				Transition move = new Transition<Move>() {
+				public Transition press = new Transition<Press>() {
 					public boolean guard() {
-						return evt.graphicItem == graphicItem && Point.distance(p0,evt.p)>100 ;
+						return evt.graphicItem == graphicItem;
 					}
 
 					public void action() {
+						listCursors.put(evt.cursorID, evt.p);
+					}
+
+					public State goTo() {
+						return hysterese;
+					}
+				};
+
+				public Transition move = new Transition<Move>() {
+					public boolean guard() {
+						return evt.graphicItem ==graphicItem && listCursors.size() == 1 &&
+								Point.distance(listCursors.firstEntry().getValue(), evt.p) > 50 ;
+					}
+
+					public void action() {
+
 					}
 
 					public State goTo() {
@@ -261,12 +275,259 @@ public class T02_TouchSelect extends Activity {
 					}
 				};
 
-				Transition release = new Transition<Release>() {
+				public Transition move2 = new Transition<Move>() {
 					public boolean guard() {
-						return listCursors.contains(evt.cursorID) && listCursors.size() == 1 ;
+						return evt.graphicItem == graphicItem && listCursors.size() > 1 &&
+								Point.distance(listCursors.firstEntry().getValue(), evt.p) > 50 ;
+					}
+
+					public void action() {
+
+					}
+
+					public State goTo() {
+						return secondTouched;
+					}
+				};
+
+				public Transition releaseCursor = new Transition<Release>() {
+					public boolean guard() {
+						return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() > 1 ;
+					}
+					public void action() {
+						listCursors.remove((Object)evt.cursorID);
+					}
+
+					public State goTo() {
+						return firstTouched;
+					}
+				};
+
+				public Transition releaseLastCursor = new Transition<Release>() {
+					public boolean guard() {
+						return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() == 1 ;
 					}
 					public void action() {
 						graphicItem.style.r = 0;
+						listCursors.remove((Object)evt.cursorID);
+						graphicItemTouched.remove((Object)graphicItem);
+					}
+
+					public State goTo() {
+						return start;
+					}
+				};
+			};
+
+			public State firstTouched = new State() {
+
+				public Transition press = new Transition<Press>() {
+					public boolean guard() {
+						return evt.graphicItem == graphicItem && listCursors.size() == 1;
+					}
+
+					public void action() {
+						listCursors.put(evt.cursorID, evt.p);
+					}
+
+					public State goTo() {
+						return secondTouched;
+					}
+				};
+
+				public Transition move = new Transition<Move>() {
+					public boolean guard() {
+						return evt.cursorID == listCursors.firstKey() && listCursors.size() == 1;
+					}
+					public void action() {
+						Point p = listCursors.firstEntry().getValue();
+						graphicItem.translateBy(new fr.liienac.statemachine.geometry.Vector(p, evt.p));
+						listCursors.put(listCursors.firstKey(), evt.p);
+					}
+
+					public State goTo() {
+						return firstTouched;
+					}
+				};
+
+				public Transition releaseLastCursor = new Transition<Release>() {
+					public boolean guard() {
+						return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() == 1 ;
+					}
+					public void action() {
+						graphicItem.style.r = 0;
+						listCursors.remove((Object)evt.cursorID);
+						graphicItemTouched.remove((Object)graphicItem);
+					}
+
+					public State goTo() {
+						return start;
+					}
+				};
+
+			};
+
+			public State secondTouched = new State() {
+
+				public Transition press = new Transition<Press>() {
+					public boolean guard() {
+						return evt.graphicItem == graphicItem ;
+					}
+
+					public void action() {
+						graphicItem.style.r = 255;
+						listCursors.put(evt.cursorID, evt.p);
+					}
+
+					public State goTo() {
+						return secondTouched;
+					}
+				};
+
+				public Transition moveP0 = new Transition<Move>() {
+					public boolean guard() {
+						return listCursors.containsKey((Object)evt.cursorID) &&
+								listCursors.lastKey() == evt.cursorID && listCursors.size() >= 2 ;
+					}
+					public void action() {
+						Point p0 = listCursors.firstEntry().getValue();
+						Point p1 = listCursors.lastEntry().getValue();
+						float ds = Point.minus(p0, evt.p).norm()/Point.minus(p0, p1).norm();
+						graphicItem.scaleBy(ds, p0);
+						graphicItem.rotateBy(new fr.liienac.statemachine.geometry.Vector(p0, evt.p), new fr.liienac.statemachine.geometry.Vector(p0, p1), p0);
+						listCursors.put(listCursors.lastKey(), evt.p);
+					}
+
+					public State goTo() {
+						return secondTouched;
+					}
+				};
+
+				public Transition moveP1 = new Transition<Move>() {
+					public boolean guard() {
+						return listCursors.containsKey((Object)evt.cursorID) &&
+								listCursors.firstKey() == evt.cursorID && listCursors.size() >= 2 ;
+					}
+					public void action() {
+						Point p0 = listCursors.firstEntry().getValue();
+						Point p1 = listCursors.lastEntry().getValue();
+						float ds = Point.minus(p1,evt.p).norm()/Point.minus(p1,p0).norm();
+						graphicItem.scaleBy(ds, p1);
+						graphicItem.rotateBy(new fr.liienac.statemachine.geometry.Vector(p1, evt.p), new fr.liienac.statemachine.geometry.Vector(p1, p0), p1);
+						listCursors.put(listCursors.firstKey(), evt.p);
+					}
+
+					public State goTo() {
+						return secondTouched;
+					}
+				};
+
+				public Transition release = new Transition<Release>() {
+					public boolean guard() {
+						return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() > 2 ;
+					}
+					public void action() {
+						listCursors.remove((Object)evt.cursorID);
+					}
+
+					public State goTo() {
+						return secondTouched;
+					}
+				};
+
+				public Transition release2 = new Transition<Release>() {
+					public boolean guard() {
+						return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() == 2 ;
+					}
+					public void action() {
+						listCursors.remove((Object)evt.cursorID);
+					}
+
+					public State goTo() {
+						return firstTouched;
+					}
+				};
+
+			};
+		}
+
+		class PanMachine extends StateMachine {
+			PanMachine() {
+			}
+
+			TreeMap<Integer, Point> listCursors = new TreeMap<>();
+
+			public State start = new State() {
+				public Transition press = new Transition<Press>() {
+					public boolean guard() {
+						return evt.graphicItem == null && listCursors.size()== 0;
+					}
+
+					public void action() {
+						listCursors.put(evt.cursorID, evt.p);
+					}
+
+					public State goTo() {
+						return hysterese;
+					}
+				};
+			};
+
+			public State hysterese = new State() {
+				public Transition press = new Transition<Press>() {
+					public boolean guard() {
+						return evt.graphicItem == null;
+					}
+
+					public void action() {
+						listCursors.put(evt.cursorID, evt.p);
+					}
+
+					public State goTo() {
+						return hysterese;
+					}
+				};
+
+				public Transition move = new Transition<Move>() {
+					public boolean guard() {
+						return evt.graphicItem == null && listCursors.size() == 1 &&
+								Point.distance(listCursors.firstEntry().getValue(), evt.p) > 50 ;
+					}
+
+					public State goTo() {
+						return firstTouched;
+					}
+				};
+
+				public Transition move2 = new Transition<Move>() {
+					public boolean guard() {
+						return evt.graphicItem == null && listCursors.size() > 1 &&
+								Point.distance(listCursors.firstEntry().getValue(), evt.p) > 50 ;
+					}
+
+					public State goTo() {
+						return secondTouched;
+					}
+				};
+
+				public Transition releaseCursor = new Transition<Release>() {
+					public boolean guard() {
+						return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() > 1 ;
+					}
+					public void action() {
+						listCursors.remove((Object)evt.cursorID);
+					}
+
+					public State goTo() {
+						return firstTouched;
+					}
+				};
+
+				public Transition releaseLastCursor = new Transition<Release>() {
+					public boolean guard() {
+						return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() == 1 ;
+					}
+					public void action() {
 						listCursors.remove((Object)evt.cursorID);
 					}
 
@@ -278,15 +539,13 @@ public class T02_TouchSelect extends Activity {
 
 			public State firstTouched = new State() {
 
-				Transition press = new Transition<Press>() {
+				public Transition press = new Transition<Press>() {
 					public boolean guard() {
-						return evt.graphicItem == graphicItem && listCursors.size()==1;
+						return evt.graphicItem == null && listCursors.size() == 1;
 					}
 
 					public void action() {
-						graphicItem.style.r = 255;
-						listCursors.add(evt.cursorID);
-						p1 = evt.p;
+						listCursors.put(evt.cursorID, evt.p);
 					}
 
 					public State goTo() {
@@ -294,13 +553,18 @@ public class T02_TouchSelect extends Activity {
 					}
 				};
 
-				Transition move = new Transition<Move>() {
+				public Transition move = new Transition<Move>() {
 					public boolean guard() {
-						return evt.cursorID == listCursors.get(0) && listCursors.size()== 1;
+						return evt.cursorID == listCursors.firstKey() && listCursors.size() == 1;
 					}
 					public void action() {
-						graphicItem.translateBy(new fr.liienac.statemachine.geometry.Vector(p0 ,evt.p));
-						p0 = evt.p;
+						Point p = listCursors.firstEntry().getValue();
+						for(Item graphicItem : sceneGraph ){
+							if (!graphicItemTouched.contains((Object)graphicItem)){
+								graphicItem.translateBy(new fr.liienac.statemachine.geometry.Vector(p, evt.p));
+							}
+						}
+						listCursors.put(listCursors.firstKey(), evt.p);
 					}
 
 					public State goTo() {
@@ -308,12 +572,11 @@ public class T02_TouchSelect extends Activity {
 					}
 				};
 
-				Transition release = new Transition<Release>() {
+				public Transition releaseLastCursor = new Transition<Release>() {
 					public boolean guard() {
-						return listCursors.contains(evt.cursorID) && listCursors.size() == 1 ;
+						return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() == 1 ;
 					}
 					public void action() {
-						graphicItem.style.r = 0;
 						listCursors.remove((Object)evt.cursorID);
 					}
 
@@ -326,15 +589,13 @@ public class T02_TouchSelect extends Activity {
 
 			public State secondTouched = new State() {
 
-				Transition press = new Transition<Press>() {
+				public Transition press = new Transition<Press>() {
 					public boolean guard() {
-						return evt.graphicItem == graphicItem ;
+						return evt.graphicItem == null;
 					}
 
 					public void action() {
-						graphicItem.style.r = 255;
-						listCursors.add(evt.cursorID);
-						p1 = evt.p;
+						listCursors.put(evt.cursorID, evt.p);
 					}
 
 					public State goTo() {
@@ -342,14 +603,22 @@ public class T02_TouchSelect extends Activity {
 					}
 				};
 
-				Transition resizeP0 = new Transition<Move>() {
+				public Transition moveP0 = new Transition<Move>() {
 					public boolean guard() {
-						return listCursors.contains(evt.cursorID) && listCursors.get(1) == evt.cursorID && listCursors.size() >= 2 ;
+						return listCursors.containsKey((Object)evt.cursorID) &&
+								listCursors.lastKey() == evt.cursorID && listCursors.size() >= 2 ;
 					}
 					public void action() {
-						float ds = Point.minus(p0, evt.p).norm()/Point.minus(p0,p1).norm();
-						graphicItem.scaleBy(ds, p0);
-						p1 = evt.p;
+						Point p0 = listCursors.firstEntry().getValue();
+						Point p1 = listCursors.lastEntry().getValue();
+						float ds = Point.minus(p0, evt.p).norm()/Point.minus(p0, p1).norm();
+						for(Item graphicItem : sceneGraph ){
+							if (!graphicItemTouched.contains((Object)graphicItem)){
+								graphicItem.scaleBy(ds, p0);
+								graphicItem.rotateBy(new fr.liienac.statemachine.geometry.Vector(p0, evt.p), new fr.liienac.statemachine.geometry.Vector(p0, p1), p0);
+							}
+						}
+						listCursors.put(listCursors.lastKey(), evt.p);
 					}
 
 					public State goTo() {
@@ -357,14 +626,22 @@ public class T02_TouchSelect extends Activity {
 					}
 				};
 
-				Transition resizeP1 = new Transition<Move>() {
+				public Transition moveP1 = new Transition<Move>() {
 					public boolean guard() {
-						return listCursors.contains(evt.cursorID) && listCursors.get(0) == evt.cursorID && listCursors.size() >= 2 ;
+						return listCursors.containsKey((Object)evt.cursorID) &&
+								listCursors.firstKey() == evt.cursorID && listCursors.size() >= 2 ;
 					}
 					public void action() {
+						Point p0 = listCursors.firstEntry().getValue();
+						Point p1 = listCursors.lastEntry().getValue();
 						float ds = Point.minus(p1,evt.p).norm()/Point.minus(p1,p0).norm();
-						graphicItem.scaleBy(ds, p1);
-						p0 = evt.p;
+						for(Item graphicItem : sceneGraph ){
+							if (!graphicItemTouched.contains((Object)graphicItem)){
+								graphicItem.scaleBy(ds, p1);
+								graphicItem.rotateBy(new fr.liienac.statemachine.geometry.Vector(p1, evt.p), new fr.liienac.statemachine.geometry.Vector(p1, p0), p1);
+							}
+						}
+						listCursors.put(listCursors.firstKey(), evt.p);
 					}
 
 					public State goTo() {
@@ -372,19 +649,33 @@ public class T02_TouchSelect extends Activity {
 					}
 				};
 
-				Transition release = new Transition<Release>() {
+				public Transition release = new Transition<Release>() {
 					public boolean guard() {
-						return listCursors.contains(evt.cursorID) && listCursors.size() == 2 ;
+						return listCursors.containsKey((Object) evt.cursorID) && listCursors.size() > 2;
 					}
+
 					public void action() {
-						listCursors.remove((Object)evt.cursorID);
+						listCursors.remove((Object) evt.cursorID);
+					}
+
+					public State goTo() {
+						return secondTouched;
+					}
+				};
+
+				public Transition release2 = new Transition<Release>() {
+					public boolean guard() {
+						return listCursors.containsKey((Object) evt.cursorID) && listCursors.size() == 2;
+					}
+
+					public void action() {
+						listCursors.remove((Object) evt.cursorID);
 					}
 
 					public State goTo() {
 						return firstTouched;
 					}
 				};
-
 			};
 		}
 

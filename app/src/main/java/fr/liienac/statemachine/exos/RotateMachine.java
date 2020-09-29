@@ -19,7 +19,7 @@ public class RotateMachine extends StateMachine {
     }
 
     public State start = new State() {
-        Transition press = new Transition<Press>() {
+        public Transition press = new Transition<Press>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem && listCursors.size()== 0;
             }
@@ -36,7 +36,7 @@ public class RotateMachine extends StateMachine {
     };
 
     public State hysterese = new State() {
-        Transition press = new Transition<Press>() {
+        public Transition press = new Transition<Press>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem;
             }
@@ -50,7 +50,7 @@ public class RotateMachine extends StateMachine {
             }
         };
 
-        Transition move = new Transition<Move>() {
+        public Transition move = new Transition<Move>() {
             public boolean guard() {
                 return evt.graphicItem ==graphicItem && listCursors.size() == 1 &&
                         Point.distance(listCursors.firstEntry().getValue(), evt.p) > 50 ;
@@ -65,7 +65,7 @@ public class RotateMachine extends StateMachine {
             }
         };
 
-        Transition move2 = new Transition<Move>() {
+        public Transition move2 = new Transition<Move>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem && listCursors.size() > 1 &&
                         Point.distance(listCursors.firstEntry().getValue(), evt.p) > 50 ;
@@ -80,7 +80,7 @@ public class RotateMachine extends StateMachine {
             }
         };
 
-        Transition releaseCursor = new Transition<Release>() {
+        public Transition releaseCursor = new Transition<Release>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() > 1 ;
             }
@@ -93,7 +93,7 @@ public class RotateMachine extends StateMachine {
             }
         };
 
-        Transition releaseLastCursor = new Transition<Release>() {
+        public Transition releaseLastCursor = new Transition<Release>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() == 1 ;
             }
@@ -110,7 +110,7 @@ public class RotateMachine extends StateMachine {
 
     public State firstTouched = new State() {
 
-        Transition press = new Transition<Press>() {
+        public Transition press = new Transition<Press>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem && listCursors.size() == 1;
             }
@@ -124,7 +124,7 @@ public class RotateMachine extends StateMachine {
             }
         };
 
-        Transition move = new Transition<Move>() {
+        public Transition move = new Transition<Move>() {
             public boolean guard() {
                 return evt.cursorID == listCursors.firstKey() && listCursors.size() == 1;
             }
@@ -139,7 +139,7 @@ public class RotateMachine extends StateMachine {
             }
         };
 
-        Transition releaseLastCursor = new Transition<Release>() {
+        public Transition releaseLastCursor = new Transition<Release>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() == 1 ;
             }
@@ -157,7 +157,7 @@ public class RotateMachine extends StateMachine {
 
     public State secondTouched = new State() {
 
-        Transition press = new Transition<Press>() {
+        public Transition press = new Transition<Press>() {
             public boolean guard() {
                 return evt.graphicItem == graphicItem ;
             }
@@ -172,7 +172,7 @@ public class RotateMachine extends StateMachine {
             }
         };
 
-        Transition resizeP0 = new Transition<Move>() {
+        public Transition resizeP0 = new Transition<Move>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) &&
                         listCursors.lastKey() == evt.cursorID && listCursors.size() >= 2 ;
@@ -189,7 +189,7 @@ public class RotateMachine extends StateMachine {
             }
         };
 
-        Transition resizeP1 = new Transition<Move>() {
+        public Transition resizeP1 = new Transition<Move>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) &&
                         listCursors.firstKey() == evt.cursorID && listCursors.size() >= 2 ;
@@ -206,7 +206,20 @@ public class RotateMachine extends StateMachine {
             }
         };
 
-        Transition release = new Transition<Release>() {
+        public Transition release = new Transition<Release>() {
+            public boolean guard() {
+                return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() > 2 ;
+            }
+            public void action() {
+                listCursors.remove((Object)evt.cursorID);
+            }
+
+            public State goTo() {
+                return secondTouched;
+            }
+        };
+
+        public Transition release2 = new Transition<Release>() {
             public boolean guard() {
                 return listCursors.containsKey((Object)evt.cursorID) && listCursors.size() == 2 ;
             }
