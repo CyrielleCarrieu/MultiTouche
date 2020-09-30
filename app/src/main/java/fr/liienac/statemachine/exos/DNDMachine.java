@@ -1,5 +1,9 @@
 package fr.liienac.statemachine.exos;
 
+import android.view.View;
+
+import com.example.conversy.multitouch.T02_TouchSelect;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,9 +20,11 @@ import fr.liienac.statemachine.graphic.Item;
 public class DNDMachine extends StateMachine {
     Item graphicItem = null;
     TreeMap<Integer, Point> listCursors = new TreeMap<>();
+    T02_TouchSelect.MyView view;
 
-    public DNDMachine(Item graphicItem) {
+    public DNDMachine(Item graphicItem, View view) {
         this.graphicItem = graphicItem;
+        this.view = (T02_TouchSelect.MyView) view;
     }
 
     public State start = new State() {
@@ -30,6 +36,7 @@ public class DNDMachine extends StateMachine {
             public void action() {
                 graphicItem.style.r = 255;
                 listCursors.put(evt.cursorID, evt.p);
+                view.getGraphicItemTouched().add(graphicItem);
             }
 
             public State goTo() {
@@ -88,6 +95,7 @@ public class DNDMachine extends StateMachine {
             public void action() {
                 graphicItem.style.r = 0;
                 listCursors.remove((Object)evt.cursorID);
+                view.getGraphicItemTouched().remove((Object)graphicItem);
             }
 
             public State goTo() {
@@ -148,6 +156,7 @@ public class DNDMachine extends StateMachine {
             public void action() {
                 graphicItem.style.r = 0;
                 listCursors.remove((Object)evt.cursorID);
+                view.getGraphicItemTouched().remove((Object)graphicItem);
             }
 
             public State goTo() {

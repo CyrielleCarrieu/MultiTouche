@@ -17,6 +17,7 @@ import fr.liienac.statemachine.ColorPicking;
 import fr.liienac.statemachine.event.Press;
 import fr.liienac.statemachine.event.Release;
 import fr.liienac.statemachine.event.Timeout;
+import fr.liienac.statemachine.exos.RotateMachine;
 import fr.liienac.statemachine.graphic.Item;
 import fr.liienac.statemachine.geometry.Point;
 import fr.liienac.statemachine.StateMachine;
@@ -112,7 +113,12 @@ public class T02_TouchSelect extends Activity {
 		Map<Long, Cursor> cursors = new HashMap<Long, Cursor>();
 		Collection<Item> sceneGraph = new Vector<Item>();
 		ColorPicking colorPicking = new ColorPicking();
-		ArrayList<Item> graphicItemTouched = new ArrayList<>();
+
+		public ArrayList<Item> getGraphicItemTouched() {
+			return graphicItemTouched;
+		}
+
+		private ArrayList<Item> graphicItemTouched = new ArrayList<>();
 
 		Handler timeoutHandler = new Handler(Looper.getMainLooper()) {
 			public void handleMessage(Message inputMessage) {
@@ -156,18 +162,23 @@ public class T02_TouchSelect extends Activity {
 			graphicItem = new Item(20, 20, 300, 300);
 			sceneGraph.add(graphicItem);
 			machine1 = new RRRMachine(graphicItem);
-			machine1.setDebug(true);
 			machines.add(machine1);
+
 			graphicItem2 = new Item(500, 500, 300, 300);
 			sceneGraph.add(graphicItem2);
 			machine2 = new RRRMachine(graphicItem2);
-			machine2.setDebug(true);
 			machines.add(machine2);
+
 			graphicItem3 = new Item(200, 200, 300, 300);
 			sceneGraph.add(graphicItem3);
 			machine3 = new RRRMachine(graphicItem3);
-			machine3.setDebug(true);
 			machines.add(machine3);
+
+
+			/*machine1.setDebug(true);
+			machine2.setDebug(true);
+			machine3.setDebug(true);
+			*/
 
 			StateMachine machine = new PanMachine();
 			machines.add(machine);
